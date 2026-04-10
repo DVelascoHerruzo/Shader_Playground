@@ -1,0 +1,84 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"          # triggers on any tag like v1.0, v1.2.3
+  workflow_dispatch:  # lets you trigger manually from the Actions tab
+
+permissions:
+  contents: write   # needed to create releases and upload assets
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure (CMake Release)
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      # ── Collect release files into a staging folder ─────────────────────
+      - name: Stage release files
+        shell: pwsh
+        run: |
+          $stage = "release-staging\ShaderPlayground"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+
+          # Executable
+          Copy-Item "build\Release\ShaderPlayground.exe" "$stage\"
+
+          # Runtime shaders (HLSL compiled on the fly at startup)
+          Copy-Item -Recurse "build\Release\shaders"  "$stage\shaders"
+
+          # Textures
+          Copy-Item -Recurse "build\Release\textures" "$stage\textures"
+
+          # ReShade (optional post-process layer, included if present)
+          if (Test-Path "build\Release\dxgi.dll") {
+            Copy-Item "build\Release\dxgi.dll" "$stage\"
+          }
+          if (Test-Path "build\Release\reshade-shaders") {
+            Copy-Item -Recurse "build\Release\reshade-shaders" "$stage\reshade-shaders"
+          }
+
+          # Screenshots folder (empty, so the app can write to it)
+          New-Item -ItemType Directory -Force -Path "$stage\screenshots" | Out-Null
+
+          # URL protocol helper — lets a website button launch the app
+          Copy-Item "register_protocol.bat" "$stage\"
+
+          # Brief user guide
+          Copy-Item "docs\setup.md" "$stage\GETTING_STARTED.md"
+
+      - name: Zip release
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "release-staging\ShaderPlayground" `
+            -DestinationPath "ShaderPlayground-${{ github.ref_name }}-win64.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Shader Playground ${{ github.ref_name }}"
+          body: |
+            ## Download
+
+            Download **ShaderPlayground-${{ github.ref_name }}-win64.zip**, unzip anywhere, and run `ShaderPlayground.exe`.
+
+            **Requirements:** Windows 10/11 x64, DirectX 11 GPU (any GPU from ~2010 onward).
+            No install needed — just unzip and double-click.
+
+            ### Optional: website launch button
+            Run `register_protocol.bat` once and your browser can open the app via the `shaderplayground://` URL scheme.
+          files: ShaderPlayground-${{ github.ref_name }}-win64.zip
+          draft: false
+          prerelease: false
