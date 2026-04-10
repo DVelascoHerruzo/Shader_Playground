@@ -69,34 +69,6 @@ Shaders and textures are automatically copied next to the exe at build time.
 
 ---
 
-## Launching from a Website Button
-
-You can embed a button on any webpage that opens the app directly in the user's browser.  
-This uses a **custom URL protocol** (`shaderplayground://`) registered in Windows.
-
-### One-time setup (end-user)
-
-Run `register_protocol.bat` from the unzipped folder (no admin rights required):
-
-```
-register_protocol.bat
-```
-
-### Website HTML
-
-```html
-<a href="shaderplayground://launch">
-  <button>Launch Shader Playground</button>
-</a>
-```
-
-Clicking the button will prompt the browser once ("Open ShaderPlayground?") and then launch the exe.  
-Works in Chrome, Edge, Firefox, and most other browsers on Windows.
-
-> The browser shows a one-time confirmation dialog — this is a built-in Windows security feature and cannot be bypassed.
-
----
-
 ## Controls
 
 | Input | Action |

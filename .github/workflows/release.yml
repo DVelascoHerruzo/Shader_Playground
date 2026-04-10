@@ -52,9 +52,6 @@ jobs:
           # Screenshots folder (empty, so the app can write to it)
           New-Item -ItemType Directory -Force -Path "$stage\screenshots" | Out-Null
 
-          # URL protocol helper — lets a website button launch the app
-          Copy-Item "register_protocol.bat" "$stage\"
-
           # Brief user guide
           Copy-Item "docs\setup.md" "$stage\GETTING_STARTED.md"
 
@@ -76,9 +73,6 @@ jobs:
 
             **Requirements:** Windows 10/11 x64, DirectX 11 GPU (any GPU from ~2010 onward).
             No install needed — just unzip and double-click.
-
-            ### Optional: website launch button
-            Run `register_protocol.bat` once and your browser can open the app via the `shaderplayground://` URL scheme.
           files: ShaderPlayground-${{ github.ref_name }}-win64.zip
           draft: false
           prerelease: false
